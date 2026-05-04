@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 const MAX_USERNAME_LENGTH = 50;
 const MAX_PASSWORD_LENGTH = 128;
+const MIN_PASSWORD_LENGTH = 8;
 const MAX_COMMENT_LENGTH = 500;
 const FAILED_LOGIN_DELAY_SECONDS = 2;
 const RESERVED_ADMIN_USERNAMES = ['admin', 'root'];
@@ -11,6 +12,15 @@ start_secure_session();
 
 function start_secure_session(): void
 {
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return;
+    }
+
+    session_name('CLO2SESSID');
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.cookie_httponly', '1');
+
     $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
         || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443);
 
@@ -125,6 +135,37 @@ function login_user(string $username, bool $isAdmin): void
     $_SESSION['is_admin'] = $isAdmin;
 }
 
+function csrf_token(): string
+{
+    if (!isset($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+
+    return $_SESSION['csrf_token'];
+}
+
+function csrf_input(): void
+{
+    ?>
+    <input type="hidden" name="csrf_token" value="<?= h(csrf_token()) ?>">
+    <?php
+}
+
+function has_valid_csrf_token(): bool
+{
+    $token = $_POST['csrf_token'] ?? '';
+
+    return is_string($token) && hash_equals(csrf_token(), $token);
+}
+
+function require_valid_csrf_token(): void
+{
+    if (!has_valid_csrf_token()) {
+        flash('Sesi form tidak valid. Silakan coba lagi.', 'error');
+        redirect($_SERVER['REQUEST_URI'] ?? '/');
+    }
+}
+
 function require_login(): void
 {
     if (current_user() === null) {
@@ -169,6 +210,26 @@ function is_reserved_admin_username(string $username): bool
 function is_valid_password_input(string $password): bool
 {
     return $password !== '' && strlen($password) <= MAX_PASSWORD_LENGTH;
+}
+
+function password_policy_error(string $password): ?string
+{
+    if (!is_valid_password_input($password)) {
+        return 'Password wajib diisi dan maksimal ' . MAX_PASSWORD_LENGTH . ' karakter.';
+    }
+
+    if (strlen($password) < MIN_PASSWORD_LENGTH) {
+        return 'Password minimal ' . MIN_PASSWORD_LENGTH . ' karakter.';
+    }
+
+    if (preg_match('/[a-z]/', $password) !== 1
+        || preg_match('/[A-Z]/', $password) !== 1
+        || preg_match('/[0-9]/', $password) !== 1
+        || preg_match('/[^A-Za-z0-9]/', $password) !== 1) {
+        return 'Password harus memuat huruf besar, huruf kecil, angka, dan simbol.';
+    }
+
+    return null;
 }
 
 function is_valid_comment(string $comment): bool
@@ -219,7 +280,10 @@ function page_header(string $title): void
                 <?php endif; ?>
                 <a href="/comment.php">Tulis Komentar</a>
                 <span class="user">Login: <?= h($user) ?></span>
-                <a class="button button-outline" href="/logout.php">Logout</a>
+                <form class="inline-form" method="post" action="/logout.php">
+                    <?php csrf_input(); ?>
+                    <button class="button button-outline" type="submit">Logout</button>
+                </form>
             <?php else: ?>
                 <a href="/signup.php">Sign Up</a>
                 <a class="button" href="/login.php">Login</a>

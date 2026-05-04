@@ -11,16 +11,19 @@ $error = '';
 $username = '';
 
 if (is_post()) {
+    require_valid_csrf_token();
+
     $username = input_string('username');
     $password = input_string('password');
     $confirmPassword = input_string('confirm_password');
+    $passwordError = password_policy_error($password);
 
     if (!is_valid_username($username)) {
         $error = 'Username wajib diisi, maksimal ' . MAX_USERNAME_LENGTH . ' karakter, dan hanya boleh berisi huruf, angka, titik, underscore, atau strip.';
     } elseif (is_reserved_admin_username($username)) {
         $error = 'Username admin/root tidak boleh didaftarkan dari halaman sign up publik.';
-    } elseif (!is_valid_password_input($password)) {
-        $error = 'Password wajib diisi dan maksimal ' . MAX_PASSWORD_LENGTH . ' karakter.';
+    } elseif ($passwordError !== null) {
+        $error = $passwordError;
     } elseif ($password !== $confirmPassword) {
         $error = 'Konfirmasi password tidak sama.';
     } else {
@@ -74,6 +77,8 @@ page_header('Sign Up');
     </div>
 
     <form class="form-card" method="post" action="/signup.php" autocomplete="off">
+        <?php csrf_input(); ?>
+
         <?php if ($error !== ''): ?>
             <div class="notice notice-error"><?= h($error) ?></div>
         <?php endif; ?>
@@ -108,7 +113,10 @@ page_header('Sign Up');
         >
 
         <button class="button" type="submit">Buat Akun</button>
-        <p class="hint">Sudah punya akun? <a class="text-link" href="/login.php">Login di sini</a>.</p>
+        <p class="hint">
+            Password minimal <?= MIN_PASSWORD_LENGTH ?> karakter dan memuat huruf besar, huruf kecil, angka, serta simbol.
+            Sudah punya akun? <a class="text-link" href="/login.php">Login di sini</a>.
+        </p>
     </form>
 </section>
 

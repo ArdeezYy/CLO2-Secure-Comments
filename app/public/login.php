@@ -11,6 +11,8 @@ $error = '';
 $username = '';
 
 if (is_post()) {
+    require_valid_csrf_token();
+
     $username = input_string('username');
     $password = input_string('password');
 
@@ -50,6 +52,8 @@ page_header('Login');
     </div>
 
     <form class="form-card" method="post" action="/login.php" autocomplete="off">
+        <?php csrf_input(); ?>
+
         <?php if ($error !== ''): ?>
             <div class="notice notice-error"><?= h($error) ?></div>
         <?php endif; ?>
