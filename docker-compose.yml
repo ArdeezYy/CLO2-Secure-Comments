@@ -14,6 +14,7 @@ services:
       DB_PASS: clo2_password
       ADMIN_USERNAME: admin
       ADMIN_PASSWORD: Admin@240!
+      ALLOW_DEMO_PASSWORD: "1"
     volumes:
       - ./app:/var/www/html:ro
     depends_on:

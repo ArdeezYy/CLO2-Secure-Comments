@@ -32,6 +32,15 @@ a {
     text-decoration: none;
 }
 
+.text-link {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.text-link:hover {
+    text-decoration: underline;
+}
+
 .topbar {
     display: flex;
     align-items: center;

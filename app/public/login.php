@@ -22,7 +22,7 @@ if (is_post()) {
         // Versi branch vulnerable-login sengaja rentan untuk bukti SQL injection.
         ensure_vulnerable_demo_password();
 
-        $unsafeSql = "SELECT username FROM users WHERE username = '{$username}' AND demo_password = '{$password}' LIMIT 1";
+        $unsafeSql = "SELECT username, is_admin FROM users WHERE username = '{$username}' AND demo_password = '{$password}' LIMIT 1";
 
         try {
             $user = db()->query($unsafeSql)->fetch();
@@ -31,8 +31,7 @@ if (is_post()) {
         }
 
         if ($user) {
-            session_regenerate_id(true);
-            $_SESSION['username'] = (string) $user['username'];
+            login_user((string) $user['username'], (bool) $user['is_admin']);
             flash('Login berhasil. Pada branch ini login sengaja rentan SQL injection.', 'success');
             redirect('/comment.php');
         }
@@ -60,7 +59,7 @@ function ensure_vulnerable_demo_password(): void
         }
     }
 
-    $stmt = $pdo->prepare('UPDATE users SET demo_password = :password WHERE username = :username');
+    $stmt = $pdo->prepare('UPDATE users SET demo_password = :password WHERE username = :username AND demo_password IS NULL');
     $stmt->execute([
         'username' => $adminUsername,
         'password' => $adminPassword,
@@ -81,6 +80,9 @@ page_header('Login');
         <p>
             Payload bukti: username <code>' OR '1'='1' -- -</code>, password
             bebas. Kembali ke branch <code>secure-login</code> untuk versi aman.
+        </p>
+        <p>
+            Belum punya akun? <a class="text-link" href="/signup.php">Daftar user baru</a>.
         </p>
     </div>
 
