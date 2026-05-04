@@ -69,6 +69,10 @@ a {
     padding: 34px 0 30px;
 }
 
+.admin-hero {
+    padding-bottom: 22px;
+}
+
 .hero h1,
 .auth-layout h1 {
     max-width: 760px;
@@ -136,6 +140,45 @@ a {
     padding: 24px;
 }
 
+.admin-panel {
+    margin-top: 24px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.stat-card {
+    min-height: 108px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+}
+
+.stat-card span {
+    display: block;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.stat-card strong {
+    display: block;
+    margin-top: 10px;
+    overflow-wrap: anywhere;
+    font-size: 22px;
+}
+
+.status-safe {
+    color: var(--success);
+}
+
+.status-danger {
+    color: var(--danger);
+}
+
 .code-block {
     max-width: 100%;
     margin: 10px 0;
@@ -152,6 +195,45 @@ a {
     display: grid;
     gap: 6px;
     margin-top: 8px;
+}
+
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+}
+
+.data-table th {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.data-table code {
+    display: inline-block;
+    max-width: 360px;
+    overflow-wrap: anywhere;
+    color: #1f2937;
+    font-family: Consolas, "Courier New", monospace;
+}
+
+.comment-cell {
+    max-width: 420px;
+    overflow-wrap: anywhere;
 }
 
 .section-title {
@@ -276,6 +358,10 @@ textarea:focus {
 
     .auth-layout {
         display: flex;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
 
     .nav {
