@@ -5,6 +5,7 @@ const MAX_USERNAME_LENGTH = 50;
 const MAX_PASSWORD_LENGTH = 128;
 const MAX_COMMENT_LENGTH = 500;
 const FAILED_LOGIN_DELAY_SECONDS = 2;
+const RESERVED_ADMIN_USERNAMES = ['admin', 'root'];
 
 start_secure_session();
 
@@ -45,13 +46,31 @@ function db(): PDO
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
 
+    ensure_user_role_column($pdo);
     ensure_default_admin($pdo);
 
     return $pdo;
 }
 
+function ensure_user_role_column(PDO $pdo): void
+{
+    $column = $pdo->query("SHOW COLUMNS FROM users LIKE 'is_admin'")->fetch();
+
+    if (!$column) {
+        try {
+            $pdo->exec('ALTER TABLE users ADD COLUMN is_admin TINYINT(1) NOT NULL DEFAULT 0');
+        } catch (PDOException $exception) {
+            if ($exception->getCode() !== '42S21') {
+                throw $exception;
+            }
+        }
+    }
+}
+
 function ensure_default_admin(PDO $pdo): void
 {
+    ensure_user_role_column($pdo);
+
     $username = getenv('ADMIN_USERNAME') ?: 'admin';
     $password = getenv('ADMIN_PASSWORD') ?: 'Admin@240!';
 
@@ -63,11 +82,13 @@ function ensure_default_admin(PDO $pdo): void
     $stmt->execute(['username' => $username]);
 
     if ($stmt->fetch()) {
+        $update = $pdo->prepare('UPDATE users SET is_admin = 1 WHERE username = :username');
+        $update->execute(['username' => $username]);
         return;
     }
 
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    $insert = $pdo->prepare('INSERT INTO users (username, password_hash) VALUES (:username, :password_hash)');
+    $insert = $pdo->prepare('INSERT INTO users (username, password_hash, is_admin) VALUES (:username, :password_hash, 1)');
     $insert->execute([
         'username' => $username,
         'password_hash' => $hash,
@@ -92,11 +113,33 @@ function current_user(): ?string
         : null;
 }
 
+function current_user_is_admin(): bool
+{
+    return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
+}
+
+function login_user(string $username, bool $isAdmin): void
+{
+    session_regenerate_id(true);
+    $_SESSION['username'] = $username;
+    $_SESSION['is_admin'] = $isAdmin;
+}
+
 function require_login(): void
 {
     if (current_user() === null) {
         flash('Silakan login terlebih dahulu untuk menambahkan komentar.', 'error');
         redirect('/login.php');
+    }
+}
+
+function require_admin(): void
+{
+    require_login();
+
+    if (!current_user_is_admin()) {
+        flash('Admin panel hanya dapat diakses oleh akun admin/root.', 'error');
+        redirect('/');
     }
 }
 
@@ -116,6 +159,11 @@ function is_valid_username(string $username): bool
     return $username !== ''
         && strlen($username) <= MAX_USERNAME_LENGTH
         && preg_match('/^[A-Za-z0-9_.-]+$/', $username) === 1;
+}
+
+function is_reserved_admin_username(string $username): bool
+{
+    return in_array(strtolower($username), RESERVED_ADMIN_USERNAMES, true);
 }
 
 function is_valid_password_input(string $password): bool
@@ -166,11 +214,14 @@ function page_header(string $title): void
         <nav class="nav">
             <a href="/">Komentar</a>
             <?php if ($user !== null): ?>
-                <a href="/admin.php">Admin Panel</a>
+                <?php if (current_user_is_admin()): ?>
+                    <a href="/admin.php">Admin Panel</a>
+                <?php endif; ?>
                 <a href="/comment.php">Tulis Komentar</a>
                 <span class="user">Login: <?= h($user) ?></span>
                 <a class="button button-outline" href="/logout.php">Logout</a>
             <?php else: ?>
+                <a href="/signup.php">Sign Up</a>
                 <a class="button" href="/login.php">Login</a>
             <?php endif; ?>
         </nav>

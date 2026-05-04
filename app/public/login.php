@@ -18,13 +18,12 @@ if (is_post()) {
         sleep(FAILED_LOGIN_DELAY_SECONDS);
         $error = 'Username atau password tidak valid.';
     } else {
-        $stmt = db()->prepare('SELECT username, password_hash FROM users WHERE username = :username LIMIT 1');
+        $stmt = db()->prepare('SELECT username, password_hash, is_admin FROM users WHERE username = :username LIMIT 1');
         $stmt->execute(['username' => $username]);
         $user = $stmt->fetch();
 
         if ($user && password_verify($password, (string) $user['password_hash'])) {
-            session_regenerate_id(true);
-            $_SESSION['username'] = (string) $user['username'];
+            login_user((string) $user['username'], (bool) $user['is_admin']);
             flash('Login berhasil. Anda dapat menambahkan komentar.', 'success');
             redirect('/comment.php');
         }
@@ -44,6 +43,9 @@ page_header('Login');
         <p>
             Gunakan akun demo <strong>admin</strong> dengan password
             <strong>Admin@240!</strong> untuk masuk dan menulis komentar.
+        </p>
+        <p>
+            Belum punya akun? <a class="text-link" href="/signup.php">Daftar user baru</a>.
         </p>
     </div>
 
