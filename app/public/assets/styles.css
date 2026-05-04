@@ -136,6 +136,24 @@ a {
     padding: 24px;
 }
 
+.code-block {
+    max-width: 100%;
+    margin: 10px 0;
+    padding: 12px;
+    overflow-x: auto;
+    border-radius: 6px;
+    background: #18212f;
+    color: #e6edf6;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 14px;
+}
+
+.query-box {
+    display: grid;
+    gap: 6px;
+    margin-top: 8px;
+}
+
 .section-title {
     display: flex;
     align-items: center;

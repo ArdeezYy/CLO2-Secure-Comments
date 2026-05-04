@@ -20,12 +20,21 @@ Browser akan menampilkan peringatan karena sertifikat SSL dibuat sendiri. Lanjut
 - Username: `admin`
 - Password: `Admin@240!`
 
+## Branch Demo
+
+- `secure-login`: versi aman dengan prepared statement, validasi input, delay login gagal, dan hash password.
+- `vulnerable-login`: versi sementara yang sengaja memakai query SQL mentah di form login utama.
+
 ## Skenario Uji
 
 - Buka halaman utama tanpa login untuk membaca komentar.
 - Buka `/comment.php` tanpa login; aplikasi harus meminta login.
 - Login dengan akun demo, tambah komentar, lalu cek komentar tampil di halaman utama.
-- Coba SQL injection di form login: `' OR '1'='1`; login harus gagal.
+- Pada branch `vulnerable-login`, coba SQL injection di form login utama:
+  - Username: `' OR '1'='1' -- -`
+  - Password: `bebas`
+  - Login harus berhasil masuk sebagai `admin`.
+- Pada branch `secure-login`, payload yang sama harus gagal.
 - Coba XSS di komentar: `<script>alert(1)</script>`; teks harus tampil mentah dan tidak dieksekusi.
 - Kirim komentar lebih dari 500 karakter; aplikasi harus menolak.
 - Ulangi login gagal; respons memiliki delay sekitar 2 detik.

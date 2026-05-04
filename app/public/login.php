@@ -9,29 +9,62 @@ if (current_user() !== null) {
 
 $error = '';
 $username = '';
+$unsafeSql = '';
 
 if (is_post()) {
-    $username = input_string('username');
-    $password = input_string('password');
+    $username = isset($_POST['username']) && is_string($_POST['username']) ? trim($_POST['username']) : '';
+    $password = isset($_POST['password']) && is_string($_POST['password']) ? trim($_POST['password']) : '';
 
-    if (!is_valid_username($username) || !is_valid_password_input($password)) {
+    if ($username === '' || $password === '' || strlen($username) > 120 || strlen($password) > 120) {
         sleep(FAILED_LOGIN_DELAY_SECONDS);
         $error = 'Username atau password tidak valid.';
-    } else {
-        $stmt = db()->prepare('SELECT username, password_hash FROM users WHERE username = :username LIMIT 1');
-        $stmt->execute(['username' => $username]);
-        $user = $stmt->fetch();
+} else {
+        // Versi branch vulnerable-login sengaja rentan untuk bukti SQL injection.
+        ensure_vulnerable_demo_password();
 
-        if ($user && password_verify($password, (string) $user['password_hash'])) {
+        $unsafeSql = "SELECT username FROM users WHERE username = '{$username}' AND demo_password = '{$password}' LIMIT 1";
+
+        try {
+            $user = db()->query($unsafeSql)->fetch();
+        } catch (PDOException) {
+            $user = false;
+        }
+
+        if ($user) {
             session_regenerate_id(true);
             $_SESSION['username'] = (string) $user['username'];
-            flash('Login berhasil. Anda dapat menambahkan komentar.', 'success');
+            flash('Login berhasil. Pada branch ini login sengaja rentan SQL injection.', 'success');
             redirect('/comment.php');
         }
 
         sleep(FAILED_LOGIN_DELAY_SECONDS);
         $error = 'Username atau password salah.';
     }
+}
+
+function ensure_vulnerable_demo_password(): void
+{
+    $pdo = db();
+    $adminUsername = getenv('ADMIN_USERNAME') ?: 'admin';
+    $adminPassword = getenv('ADMIN_PASSWORD') ?: 'Admin@240!';
+
+    $column = $pdo->query("SHOW COLUMNS FROM users LIKE 'demo_password'")->fetch();
+
+    if (!$column) {
+        try {
+            $pdo->exec('ALTER TABLE users ADD COLUMN demo_password VARCHAR(128) NULL');
+        } catch (PDOException $exception) {
+            if ($exception->getCode() !== '42S21') {
+                throw $exception;
+            }
+        }
+    }
+
+    $stmt = $pdo->prepare('UPDATE users SET demo_password = :password WHERE username = :username');
+    $stmt->execute([
+        'username' => $adminUsername,
+        'password' => $adminPassword,
+    ]);
 }
 
 page_header('Login');
@@ -42,8 +75,12 @@ page_header('Login');
         <p class="eyebrow">Restricted Access</p>
         <h1>Login pengguna</h1>
         <p>
-            Gunakan akun demo <strong>admin</strong> dengan password
-            <strong>Admin@240!</strong> untuk masuk dan menulis komentar.
+            Branch ini sengaja memakai login rentan untuk menunjukkan bagaimana
+            SQL injection dapat membypass autentikasi.
+        </p>
+        <p>
+            Payload bukti: username <code>' OR '1'='1' -- -</code>, password
+            bebas. Kembali ke branch <code>secure-login</code> untuk versi aman.
         </p>
     </div>
 
@@ -73,6 +110,13 @@ page_header('Login');
         >
 
         <button class="button" type="submit">Login</button>
+
+        <?php if ($unsafeSql !== ''): ?>
+            <div class="query-box">
+                <strong>Query rentan yang dijalankan</strong>
+                <pre class="code-block"><?= h($unsafeSql) ?></pre>
+            </div>
+        <?php endif; ?>
     </form>
 </section>
 
