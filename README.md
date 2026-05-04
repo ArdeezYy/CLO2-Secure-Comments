@@ -24,6 +24,7 @@ Browser akan menampilkan peringatan karena sertifikat SSL dibuat sendiri. Lanjut
 
 - Buka halaman utama tanpa login untuk membaca komentar.
 - Buka `/comment.php` tanpa login; aplikasi harus meminta login.
+- Setelah login, buka `/admin.php` untuk melihat monitoring tabel `users` dan `comments`.
 - Login dengan akun demo, tambah komentar, lalu cek komentar tampil di halaman utama.
 - Coba SQL injection di form login: `' OR '1'='1`; login harus gagal.
 - Coba XSS di komentar: `<script>alert(1)</script>`; teks harus tampil mentah dan tidak dieksekusi.

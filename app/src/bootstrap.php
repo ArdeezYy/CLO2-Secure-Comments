@@ -166,6 +166,7 @@ function page_header(string $title): void
         <nav class="nav">
             <a href="/">Komentar</a>
             <?php if ($user !== null): ?>
+                <a href="/admin.php">Admin Panel</a>
                 <a href="/comment.php">Tulis Komentar</a>
                 <span class="user">Login: <?= h($user) ?></span>
                 <a class="button button-outline" href="/logout.php">Logout</a>
