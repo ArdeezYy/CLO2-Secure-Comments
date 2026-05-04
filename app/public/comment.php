@@ -8,6 +8,8 @@ $error = '';
 $body = '';
 
 if (is_post()) {
+    require_valid_csrf_token();
+
     $body = input_string('body');
 
     if (!is_valid_comment($body)) {
@@ -38,6 +40,8 @@ page_header('Tulis Komentar');
     </div>
 
     <form class="form-card" method="post" action="/comment.php">
+        <?php csrf_input(); ?>
+
         <?php if ($error !== ''): ?>
             <div class="notice notice-error"><?= h($error) ?></div>
         <?php endif; ?>

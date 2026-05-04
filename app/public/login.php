@@ -12,13 +12,15 @@ $username = '';
 $unsafeSql = '';
 
 if (is_post()) {
+    require_valid_csrf_token();
+
     $username = isset($_POST['username']) && is_string($_POST['username']) ? trim($_POST['username']) : '';
     $password = isset($_POST['password']) && is_string($_POST['password']) ? trim($_POST['password']) : '';
 
     if ($username === '' || $password === '' || strlen($username) > 120 || strlen($password) > 120) {
         sleep(FAILED_LOGIN_DELAY_SECONDS);
         $error = 'Username atau password tidak valid.';
-} else {
+    } else {
         // Versi branch vulnerable-login sengaja rentan untuk bukti SQL injection.
         ensure_vulnerable_demo_password();
 
@@ -87,6 +89,8 @@ page_header('Login');
     </div>
 
     <form class="form-card" method="post" action="/login.php" autocomplete="off">
+        <?php csrf_input(); ?>
+
         <?php if ($error !== ''): ?>
             <div class="notice notice-error"><?= h($error) ?></div>
         <?php endif; ?>
