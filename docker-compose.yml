@@ -1,0 +1,41 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    container_name: clo2_web
+    ports:
+      - "8080:80"
+      - "8443:443"
+    environment:
+      DB_HOST: db
+      DB_NAME: clo2_comments
+      DB_USER: clo2_user
+      DB_PASS: clo2_password
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: Admin@240!
+    volumes:
+      - ./app:/var/www/html:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    container_name: clo2_db
+    environment:
+      MYSQL_DATABASE: clo2_comments
+      MYSQL_USER: clo2_user
+      MYSQL_PASSWORD: clo2_password
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  db_data:

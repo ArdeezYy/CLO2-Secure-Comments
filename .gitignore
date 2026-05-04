@@ -1,0 +1,9 @@
+.env
+*.log
+vendor/
+node_modules/
+.DS_Store
+Thumbs.db
+
+# Local generated data belongs in Docker volumes, not the repository.
+db_data/
