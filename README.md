@@ -8,6 +8,12 @@ Aplikasi papan komentar publik berbasis PHP, MySQL, Apache, dan Docker untuk dem
 docker compose up --build -d
 ```
 
+Jika muncul error `dockerDesktopLinuxEngine` atau Docker engine belum hidup, jalankan:
+
+```powershell
+.\scripts\start-site.ps1
+```
+
 URL demo:
 
 - HTTPS: https://localhost:8443
