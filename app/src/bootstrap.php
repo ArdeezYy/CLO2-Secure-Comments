@@ -303,6 +303,7 @@ function page_footer(): void
 {
     ?>
     </main>
+    <script src="/assets/app.js" defer></script>
 </body>
 </html>
     <?php

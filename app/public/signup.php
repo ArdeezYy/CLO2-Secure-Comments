@@ -76,7 +76,7 @@ page_header('Sign Up');
         </p>
     </div>
 
-    <form class="form-card" method="post" action="/signup.php" autocomplete="off">
+    <form class="form-card" method="post" action="/signup.php" autocomplete="off" data-password-policy>
         <?php csrf_input(); ?>
 
         <?php if ($error !== ''): ?>
@@ -95,24 +95,44 @@ page_header('Sign Up');
         >
 
         <label for="password">Password</label>
-        <input
-            id="password"
-            name="password"
-            type="password"
-            maxlength="<?= MAX_PASSWORD_LENGTH ?>"
-            required
-        >
+        <div class="password-field">
+            <input
+                id="password"
+                name="password"
+                type="password"
+                maxlength="<?= MAX_PASSWORD_LENGTH ?>"
+                required
+                data-password-input
+            >
+            <button class="password-toggle" type="button" data-password-toggle="password" aria-label="Tampilkan password"></button>
+        </div>
+
+        <div class="password-rules" aria-live="polite">
+            <p>Password harus memenuhi syarat berikut:</p>
+            <ul>
+                <li data-rule="length">Minimal <?= MIN_PASSWORD_LENGTH ?> karakter</li>
+                <li data-rule="lower">Memuat huruf kecil</li>
+                <li data-rule="upper">Memuat huruf besar</li>
+                <li data-rule="number">Memuat angka</li>
+                <li data-rule="symbol">Memuat simbol</li>
+                <li data-rule="match">Konfirmasi password sama</li>
+            </ul>
+        </div>
 
         <label for="confirm_password">Konfirmasi Password</label>
-        <input
-            id="confirm_password"
-            name="confirm_password"
-            type="password"
-            maxlength="<?= MAX_PASSWORD_LENGTH ?>"
-            required
-        >
+        <div class="password-field">
+            <input
+                id="confirm_password"
+                name="confirm_password"
+                type="password"
+                maxlength="<?= MAX_PASSWORD_LENGTH ?>"
+                required
+                data-confirm-password-input
+            >
+            <button class="password-toggle" type="button" data-password-toggle="confirm_password" aria-label="Tampilkan konfirmasi password"></button>
+        </div>
 
-        <button class="button" type="submit">Buat Akun</button>
+        <button class="button" type="submit" data-signup-submit>Buat Akun</button>
         <p class="hint">
             Password minimal <?= MIN_PASSWORD_LENGTH ?> karakter dan memuat huruf besar, huruf kecil, angka, serta simbol.
             Sudah punya akun? <a class="text-link" href="/login.php">Login di sini</a>.
