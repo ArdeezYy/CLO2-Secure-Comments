@@ -70,13 +70,16 @@ page_header('Login');
         >
 
         <label for="password">Password</label>
-        <input
-            id="password"
-            name="password"
-            type="password"
-            maxlength="<?= MAX_PASSWORD_LENGTH ?>"
-            required
-        >
+        <div class="password-field">
+            <input
+                id="password"
+                name="password"
+                type="password"
+                maxlength="<?= MAX_PASSWORD_LENGTH ?>"
+                required
+            >
+            <button class="password-toggle" type="button" data-password-toggle="password" aria-label="Tampilkan password"></button>
+        </div>
 
         <button class="button" type="submit">Login</button>
     </form>

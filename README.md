@@ -40,6 +40,8 @@ Browser akan menampilkan peringatan karena sertifikat SSL dibuat sendiri. Lanjut
 - Semua form POST memakai CSRF token.
 - Password user disimpan dengan `password_hash()` yang otomatis memakai salt.
 - Signup menerapkan password policy minimal 8 karakter dengan huruf besar, huruf kecil, angka, dan simbol.
+- Halaman login dan signup memiliki tombol tampil/sembunyikan password.
+- Halaman signup menampilkan checklist password secara langsung dan tombol daftar hanya aktif jika password memenuhi syarat.
 - Branch `secure-login` memakai prepared statement untuk login dan input komentar.
 - Output dari database di-escape dengan `htmlspecialchars()` untuk mitigasi XSS.
 - Input dibatasi panjangnya di sisi server untuk mengurangi risiko overflow/abuse.
