@@ -5,8 +5,16 @@ param(
 $ErrorActionPreference = 'Stop'
 
 function Test-DockerEngine {
-    docker info --format '{{.ServerVersion}}' *> $null
-    return $LASTEXITCODE -eq 0
+    try {
+        $previousErrorActionPreference = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        & docker info --format '{{.ServerVersion}}' *> $null
+        return $LASTEXITCODE -eq 0
+    } catch {
+        return $false
+    } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
 }
 
 if (-not (Test-DockerEngine)) {
