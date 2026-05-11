@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: docker/web/Dockerfile
-    container_name: clo2_web
+    container_name: Ardika_101032300240_web
     ports:
       - "8080:80"
       - "8443:443"
@@ -23,7 +23,7 @@ services:
 
   db:
     image: mysql:8.4
-    container_name: clo2_db
+    container_name: Ardika_101032300240_db
     environment:
       MYSQL_DATABASE: clo2_comments
       MYSQL_USER: clo2_user
