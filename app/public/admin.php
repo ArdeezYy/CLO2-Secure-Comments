@@ -8,12 +8,14 @@ $pdo = db();
 
 $userCount = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
 $commentCount = (int) $pdo->query('SELECT COUNT(*) FROM comments')->fetchColumn();
+$loginAttemptCount = (int) $pdo->query('SELECT COUNT(*) FROM login_attempts')->fetchColumn();
 $latestCommentAt = $pdo->query('SELECT MAX(created_at) FROM comments')->fetchColumn();
 $demoPasswordColumn = $pdo->query("SHOW COLUMNS FROM users LIKE 'demo_password'")->fetch();
 $showDemoPassword = getenv('ALLOW_DEMO_PASSWORD') === '1' && (bool) $demoPasswordColumn;
 
 $users = $pdo->query('SELECT * FROM users ORDER BY id ASC')->fetchAll();
 $comments = $pdo->query('SELECT id, author, body, created_at FROM comments ORDER BY created_at DESC, id DESC LIMIT 50')->fetchAll();
+$loginAttempts = $pdo->query('SELECT username, ip_address, failed_count, locked_until, updated_at FROM login_attempts ORDER BY updated_at DESC LIMIT 50')->fetchAll();
 
 page_header('Admin Panel');
 ?>
@@ -40,6 +42,10 @@ page_header('Admin Panel');
     <article class="stat-card">
         <span>Komentar Terakhir</span>
         <strong><?= h($latestCommentAt ? date('d M Y H:i', strtotime((string) $latestCommentAt)) : '-') ?></strong>
+    </article>
+    <article class="stat-card">
+        <span>Login Attempts</span>
+        <strong><?= h((string) $loginAttemptCount) ?></strong>
     </article>
     <article class="stat-card">
         <span>Mode Demo SQLi</span>
@@ -82,6 +88,44 @@ page_header('Admin Panel');
                             <td><code><?= h((string) ($userRow['demo_password'] ?? '')) ?></code></td>
                         <?php endif; ?>
                         <td><?= h(date('d M Y H:i', strtotime((string) $userRow['created_at']))) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel admin-panel">
+    <div class="section-title">
+        <h2>Tabel Login Attempts</h2>
+        <span>Maksimal 50 percobaan terbaru</span>
+    </div>
+
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>IP Address</th>
+                    <th>Gagal</th>
+                    <th>Locked Until</th>
+                    <th>Diperbarui</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($loginAttempts as $attemptRow): ?>
+                    <tr>
+                        <td><?= h((string) $attemptRow['username']) ?></td>
+                        <td><?= h((string) $attemptRow['ip_address']) ?></td>
+                        <td><?= h((string) $attemptRow['failed_count']) ?></td>
+                        <td>
+                            <?php if ($attemptRow['locked_until'] !== null && (int) $attemptRow['locked_until'] > time()): ?>
+                                <?= h(date('d M Y H:i:s', (int) $attemptRow['locked_until'])) ?>
+                            <?php else: ?>
+                                -
+                            <?php endif; ?>
+                        </td>
+                        <td><?= h(date('d M Y H:i', strtotime((string) $attemptRow['updated_at']))) ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>

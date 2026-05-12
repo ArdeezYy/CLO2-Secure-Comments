@@ -20,18 +20,31 @@ if (is_post()) {
         sleep(FAILED_LOGIN_DELAY_SECONDS);
         $error = 'Username atau password tidak valid.';
     } else {
-        $stmt = db()->prepare('SELECT username, password_hash, is_admin FROM users WHERE username = :username LIMIT 1');
-        $stmt->execute(['username' => $username]);
-        $user = $stmt->fetch();
+        $lockRemaining = login_lock_remaining_seconds($username);
 
-        if ($user && password_verify($password, (string) $user['password_hash'])) {
-            login_user((string) $user['username'], (bool) $user['is_admin']);
-            flash('Login berhasil. Anda dapat menambahkan komentar.', 'success');
-            redirect('/comment.php');
+        if ($lockRemaining > 0) {
+            $error = 'Terlalu banyak percobaan gagal. Silakan tunggu ' . $lockRemaining . ' detik sebelum mencoba lagi.';
+        } else {
+            $stmt = db()->prepare('SELECT username, password_hash, is_admin FROM users WHERE username = :username LIMIT 1');
+            $stmt->execute(['username' => $username]);
+            $user = $stmt->fetch();
+
+            if ($user && password_verify($password, (string) $user['password_hash'])) {
+                clear_failed_logins($username);
+                login_user((string) $user['username'], (bool) $user['is_admin']);
+                flash('Login berhasil. Anda dapat menambahkan komentar.', 'success');
+                redirect('/comment.php');
+            }
+
+            $failedCount = record_failed_login($username);
+            sleep(FAILED_LOGIN_DELAY_SECONDS);
+            if ($failedCount >= FAILED_LOGIN_LOCK_THRESHOLD) {
+                $error = 'Password salah 5 kali. Login dikunci selama 1 menit.';
+            } else {
+                $remainingAttempts = FAILED_LOGIN_LOCK_THRESHOLD - $failedCount;
+                $error = 'Username atau password salah. Sisa percobaan sebelum dikunci: ' . $remainingAttempts . '.';
+            }
         }
-
-        sleep(FAILED_LOGIN_DELAY_SECONDS);
-        $error = 'Username atau password salah.';
     }
 }
 

@@ -332,6 +332,7 @@ Admin panel menampilkan:
 - Status mode demo SQLi.
 - Isi tabel `users`.
 - Isi tabel `comments`.
+- Isi tabel `login_attempts` untuk melihat percobaan login gagal dan status lockout.
 
 Semua data tetap di-escape dengan `htmlspecialchars()`, termasuk data yang berasal dari database.
 
@@ -359,6 +360,17 @@ Logout dilakukan melalui `logout.php` dengan metode POST dan CSRF token. Setelah
 | `author` | VARCHAR(50) | Nama penulis komentar |
 | `body` | VARCHAR(500) | Isi komentar |
 | `created_at` | TIMESTAMP | Waktu komentar dibuat |
+
+### 9.3 Tabel `login_attempts`
+
+| Kolom | Tipe | Keterangan |
+| --- | --- | --- |
+| `id` | INT UNSIGNED AUTO_INCREMENT | Primary key |
+| `username` | VARCHAR(50) | Username yang dicoba |
+| `ip_address` | VARCHAR(45) | Alamat IP client |
+| `failed_count` | TINYINT UNSIGNED | Jumlah login gagal |
+| `locked_until` | INT UNSIGNED | Waktu Unix sampai kapan login dikunci |
+| `updated_at` | TIMESTAMP | Waktu percobaan terakhir diperbarui |
 
 ## 10. Penjelasan Metode Mengatasi Kerentanan Keamanan
 
@@ -522,7 +534,7 @@ Manfaat:
 
 ### 10.8 Brute Force Mitigation
 
-Login gagal diberi delay tetap:
+Login gagal memiliki dua lapis mitigasi. Pertama, setiap login gagal diberi delay tetap:
 
 ```php
 sleep(FAILED_LOGIN_DELAY_SECONDS);
@@ -534,10 +546,18 @@ Dengan nilai:
 FAILED_LOGIN_DELAY_SECONDS = 2
 ```
 
+Kedua, aplikasi menyimpan jumlah percobaan gagal pada tabel `login_attempts`. Jika username dari IP yang sama gagal login sebanyak 5 kali, login dikunci selama 1 menit:
+
+```php
+const FAILED_LOGIN_LOCK_THRESHOLD = 5;
+const FAILED_LOGIN_LOCK_SECONDS = 60;
+```
+
 Manfaat:
 
 - Percobaan password berulang menjadi lebih lambat.
-- Mudah dibuktikan menggunakan Burp Suite Intruder karena setiap login gagal terasa memiliki jeda.
+- Setelah 5 kali gagal, attacker harus menunggu sebelum mencoba lagi.
+- Mudah dibuktikan menggunakan Burp Suite Intruder karena setiap login gagal terasa memiliki jeda dan percobaan ke-5 menghasilkan lockout.
 
 ### 10.9 Security Headers
 
@@ -660,11 +680,13 @@ Ekspektasi:
 
 ### 12.8 Test Brute Force Delay
 
-Lakukan login gagal beberapa kali.
+Lakukan login gagal dengan username yang sama sebanyak 5 kali.
 
 Ekspektasi:
 
 - Setiap percobaan gagal memiliki jeda sekitar 2 detik.
+- Setelah gagal 5 kali, login dikunci selama 1 menit.
+- Percobaan berikutnya menampilkan pesan untuk menunggu sebelum mencoba lagi.
 
 ## 13. Perintah Operasional
 

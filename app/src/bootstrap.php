@@ -6,6 +6,8 @@ const MAX_PASSWORD_LENGTH = 128;
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_COMMENT_LENGTH = 500;
 const FAILED_LOGIN_DELAY_SECONDS = 2;
+const FAILED_LOGIN_LOCK_THRESHOLD = 5;
+const FAILED_LOGIN_LOCK_SECONDS = 60;
 const RESERVED_ADMIN_USERNAMES = ['admin', 'root'];
 
 start_secure_session();
@@ -57,6 +59,7 @@ function db(): PDO
     ]);
 
     ensure_user_role_column($pdo);
+    ensure_login_attempts_table($pdo);
     ensure_default_admin($pdo);
 
     return $pdo;
@@ -75,6 +78,21 @@ function ensure_user_role_column(PDO $pdo): void
             }
         }
     }
+}
+
+function ensure_login_attempts_table(PDO $pdo): void
+{
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS login_attempts (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) NOT NULL,
+            ip_address VARCHAR(45) NOT NULL,
+            failed_count TINYINT UNSIGNED NOT NULL DEFAULT 0,
+            locked_until INT UNSIGNED DEFAULT NULL,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY uniq_login_attempts_username_ip (username, ip_address)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+    );
 }
 
 function ensure_default_admin(PDO $pdo): void
@@ -133,6 +151,78 @@ function login_user(string $username, bool $isAdmin): void
     session_regenerate_id(true);
     $_SESSION['username'] = $username;
     $_SESSION['is_admin'] = $isAdmin;
+}
+
+function client_ip_address(): string
+{
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    return is_string($ip) && strlen($ip) <= 45 ? $ip : '0.0.0.0';
+}
+
+function login_lock_remaining_seconds(string $username): int
+{
+    $stmt = db()->prepare('SELECT locked_until FROM login_attempts WHERE username = :username AND ip_address = :ip_address LIMIT 1');
+    $stmt->execute([
+        'username' => strtolower($username),
+        'ip_address' => client_ip_address(),
+    ]);
+    $attempt = $stmt->fetch();
+
+    if (!$attempt || $attempt['locked_until'] === null) {
+        return 0;
+    }
+
+    $remaining = (int) $attempt['locked_until'] - time();
+    return max(0, $remaining);
+}
+
+function record_failed_login(string $username): int
+{
+    $username = strtolower($username);
+    $ipAddress = client_ip_address();
+    $now = time();
+
+    $stmt = db()->prepare('SELECT failed_count, locked_until FROM login_attempts WHERE username = :username AND ip_address = :ip_address LIMIT 1');
+    $stmt->execute([
+        'username' => $username,
+        'ip_address' => $ipAddress,
+    ]);
+    $attempt = $stmt->fetch();
+
+    $failedCount = 1;
+    if ($attempt) {
+        $isExpiredLock = $attempt['locked_until'] !== null && (int) $attempt['locked_until'] <= $now;
+        $failedCount = $isExpiredLock ? 1 : ((int) $attempt['failed_count'] + 1);
+    }
+
+    $lockedUntil = null;
+    if ($failedCount >= FAILED_LOGIN_LOCK_THRESHOLD) {
+        $lockedUntil = $now + FAILED_LOGIN_LOCK_SECONDS;
+        $failedCount = FAILED_LOGIN_LOCK_THRESHOLD;
+    }
+
+    $upsert = db()->prepare(
+        'INSERT INTO login_attempts (username, ip_address, failed_count, locked_until)
+         VALUES (:username, :ip_address, :failed_count, :locked_until)
+         ON DUPLICATE KEY UPDATE failed_count = VALUES(failed_count), locked_until = VALUES(locked_until)'
+    );
+    $upsert->execute([
+        'username' => $username,
+        'ip_address' => $ipAddress,
+        'failed_count' => $failedCount,
+        'locked_until' => $lockedUntil,
+    ]);
+
+    return $failedCount;
+}
+
+function clear_failed_logins(string $username): void
+{
+    $stmt = db()->prepare('DELETE FROM login_attempts WHERE username = :username AND ip_address = :ip_address');
+    $stmt->execute([
+        'username' => strtolower($username),
+        'ip_address' => client_ip_address(),
+    ]);
 }
 
 function csrf_token(): string
