@@ -104,13 +104,13 @@ a {
 }
 
 .shell {
-    width: min(1080px, calc(100% - 32px));
+    width: min(1240px, calc(100% - 40px));
     margin: 0 auto;
-    padding: 42px 0 64px;
+    padding: 28px 0 56px;
 }
 
 .hero {
-    padding: 28px 0 32px;
+    padding: 14px 0 18px;
 }
 
 .admin-hero {
@@ -121,8 +121,8 @@ a {
 .auth-layout h1 {
     max-width: 760px;
     margin: 0;
-    font-size: clamp(34px, 5vw, 58px);
-    line-height: 1.02;
+    font-size: clamp(32px, 4vw, 48px);
+    line-height: 1.04;
     letter-spacing: 0;
 }
 
@@ -143,7 +143,29 @@ a {
 }
 
 .actions {
-    margin-top: 24px;
+    margin-top: 18px;
+}
+
+.home-grid {
+    display: grid;
+    grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.home-grid .hero {
+    position: sticky;
+    top: 82px;
+}
+
+.home-grid .hero h1 {
+    max-width: 390px;
+    font-size: clamp(34px, 3.2vw, 46px);
+}
+
+.home-grid .hero p {
+    max-width: 360px;
+    font-size: 15px;
 }
 
 .button {
@@ -193,7 +215,7 @@ a {
 }
 
 .panel {
-    padding: 24px;
+    padding: 20px;
 }
 
 .admin-panel {
@@ -294,7 +316,7 @@ a {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
 }
 
 .section-title h2 {
@@ -310,15 +332,16 @@ a {
 
 .comments {
     display: grid;
-    gap: 12px;
+    gap: 10px;
 }
 
 .comment {
-    padding: 18px;
+    padding: 15px;
+    box-shadow: none;
 }
 
 .comment p {
-    margin: 12px 0 0;
+    margin: 10px 0 0;
     white-space: normal;
     overflow-wrap: anywhere;
 }
@@ -485,6 +508,20 @@ textarea:focus {
 
     .auth-layout {
         display: flex;
+    }
+
+    .home-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .home-grid .hero {
+        position: static;
+    }
+
+    .home-grid .hero h1,
+    .home-grid .hero p {
+        max-width: 100%;
     }
 
     .stats-grid {
