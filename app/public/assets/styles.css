@@ -104,9 +104,9 @@ a {
 }
 
 .shell {
-    width: min(1240px, calc(100% - 40px));
+    width: min(1120px, calc(100% - 72px));
     margin: 0 auto;
-    padding: 28px 0 56px;
+    padding: clamp(48px, 7vh, 76px) 0 56px;
 }
 
 .hero {
@@ -148,14 +148,14 @@ a {
 
 .home-grid {
     display: grid;
-    grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
-    gap: 24px;
+    grid-template-columns: minmax(300px, 370px) minmax(0, 1fr);
+    gap: 30px;
     align-items: start;
 }
 
 .home-grid .hero {
     position: sticky;
-    top: 82px;
+    top: 104px;
 }
 
 .home-grid .hero h1 {

@@ -266,12 +266,12 @@ function page_header(string $title): void
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= h($title) ?> - CLO 2</title>
+    <title><?= h($title) ?> - Currents</title>
     <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
     <header class="topbar">
-        <a class="brand" href="/">CLO 2 Secure Comments</a>
+        <a class="brand" href="/">Currents</a>
         <nav class="nav">
             <a href="/">Komentar</a>
             <?php if ($user !== null): ?>
