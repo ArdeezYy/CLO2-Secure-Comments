@@ -18,10 +18,9 @@ if (is_post()) {
     $password = isset($_POST['password']) && is_string($_POST['password']) ? trim($_POST['password']) : '';
 
     if ($username === '' || $password === '' || strlen($username) > 120 || strlen($password) > 120) {
-        sleep(FAILED_LOGIN_DELAY_SECONDS);
         $error = 'Username atau password tidak valid.';
     } else {
-        // Versi branch vulnerable-login sengaja rentan untuk bukti SQL injection.
+        // Branch vulnerable-login sengaja tidak memakai rate limiting agar brute force mudah didemokan.
         ensure_vulnerable_demo_password();
 
         $unsafeSql = "SELECT username, is_admin FROM users WHERE username = '{$username}' AND demo_password = '{$password}' LIMIT 1";
@@ -38,7 +37,6 @@ if (is_post()) {
             redirect('/comment.php');
         }
 
-        sleep(FAILED_LOGIN_DELAY_SECONDS);
         $error = 'Username atau password salah.';
     }
 }
@@ -82,6 +80,10 @@ page_header('Login');
         <p>
             Payload bukti: username <code>' OR '1'='1' -- -</code>, password
             bebas. Kembali ke branch <code>secure-login</code> untuk versi aman.
+        </p>
+        <p>
+            Branch ini juga sengaja tidak memakai delay dan lockout login, sehingga
+            percobaan password berulang dapat berjalan cepat untuk demo brute force.
         </p>
         <p>
             Belum punya akun? <a class="text-link" href="/signup.php">Daftar user baru</a>.

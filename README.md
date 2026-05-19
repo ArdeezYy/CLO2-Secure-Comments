@@ -30,8 +30,8 @@ Browser akan menampilkan peringatan karena sertifikat SSL dibuat sendiri. Lanjut
 
 ## Branch Demo
 
-- `secure-login`: versi aman dengan prepared statement, validasi input, CSRF token, delay login gagal, session hardening, dan hash password.
-- `vulnerable-login`: versi sementara yang sengaja memakai query SQL mentah di form login utama, tetapi kontrol lain seperti CSRF, XSS escaping, admin authorization, HTTPS, dan session hardening tetap aktif.
+- `secure-login`: versi aman dengan prepared statement, validasi input, CSRF token, delay login gagal, lockout brute force, session hardening, escaping XSS, pembatasan input, dan hash password.
+- `vulnerable-login`: versi rentan untuk demo SQL injection, stored XSS, brute force, dan oversized input sebagai analog buffer overflow pada aplikasi PHP. Branch ini sengaja memakai query SQL mentah, menampilkan komentar tanpa escaping, melonggarkan CSP inline script, tidak memakai delay/lockout login, dan tidak membatasi panjang komentar.
 
 ## Kontrol Keamanan
 
@@ -43,8 +43,11 @@ Browser akan menampilkan peringatan karena sertifikat SSL dibuat sendiri. Lanjut
 - Halaman login dan signup memiliki tombol tampil/sembunyikan password.
 - Halaman signup menampilkan checklist password secara langsung dan tombol daftar hanya aktif jika password memenuhi syarat.
 - Branch `secure-login` memakai prepared statement untuk login dan input komentar.
-- Output dari database di-escape dengan `htmlspecialchars()` untuk mitigasi XSS.
-- Input dibatasi panjangnya di sisi server untuk mengurangi risiko overflow/abuse.
+- Branch `secure-login` meng-escape output database dengan `htmlspecialchars()` untuk mitigasi XSS.
+- Branch `vulnerable-login` sengaja menampilkan isi komentar tanpa escaping untuk demo stored XSS.
+- Branch `vulnerable-login` sengaja tidak memakai delay/lockout login untuk demo brute force.
+- Branch `secure-login` membatasi panjang input di sisi server untuk mengurangi risiko overflow/abuse.
+- Branch `vulnerable-login` sengaja tidak membatasi panjang komentar dan memakai kolom `LONGTEXT` untuk demo oversized input.
 - Admin panel hanya bisa diakses akun dengan role admin.
 - Security headers aktif: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy.
 
@@ -60,8 +63,11 @@ Browser akan menampilkan peringatan karena sertifikat SSL dibuat sendiri. Lanjut
   - Password: `bebas`
   - Login harus berhasil masuk sebagai `admin`.
 - Pada branch `secure-login`, payload yang sama harus gagal.
-- Coba XSS di komentar: `<script>alert(1)</script>`; teks harus tampil mentah dan tidak dieksekusi.
-- Kirim komentar lebih dari 500 karakter; aplikasi harus menolak.
+- Pada branch `vulnerable-login`, login lalu kirim komentar `<script>alert(1)</script>`; alert harus muncul ketika halaman komentar dibuka.
+- Pada branch `secure-login`, payload XSS yang sama harus tampil sebagai teks dan tidak dieksekusi.
+- Pada branch `vulnerable-login`, kirim komentar sangat panjang; aplikasi tetap menerima dan menyimpannya sebagai demo oversized input.
+- Pada branch `secure-login`, kirim komentar lebih dari 500 karakter; aplikasi harus menolak.
 - Submit form POST tanpa CSRF token harus ditolak/redirect.
-- Ulangi login gagal; respons memiliki delay sekitar 2 detik.
+- Pada branch `vulnerable-login`, ulangi login gagal berkali-kali; respons tetap cepat karena tidak ada delay/lockout.
+- Pada branch `secure-login`, ulangi login gagal; respons memiliki delay sekitar 2 detik dan setelah 5 kali gagal login dikunci sementara.
 - Inspeksi sertifikat browser pada `https://localhost:8443`.

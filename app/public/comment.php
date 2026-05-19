@@ -9,11 +9,12 @@ $body = '';
 
 if (is_post()) {
     require_valid_csrf_token();
+    ensure_vulnerable_large_comment_column();
 
     $body = input_string('body');
 
-    if (!is_valid_comment($body)) {
-        $error = 'Komentar wajib diisi dan maksimal ' . MAX_COMMENT_LENGTH . ' karakter.';
+    if ($body === '') {
+        $error = 'Komentar wajib diisi.';
     } else {
         $stmt = db()->prepare('INSERT INTO comments (author, body) VALUES (:author, :body)');
         $stmt->execute([
@@ -26,6 +27,11 @@ if (is_post()) {
     }
 }
 
+function ensure_vulnerable_large_comment_column(): void
+{
+    db()->exec('ALTER TABLE comments MODIFY body LONGTEXT NOT NULL');
+}
+
 page_header('Tulis Komentar');
 ?>
 
@@ -34,8 +40,8 @@ page_header('Tulis Komentar');
         <p class="eyebrow">Input Terproteksi</p>
         <h1>Tulis komentar baru</h1>
         <p>
-            Input diproses menggunakan prepared statement, dibatasi panjangnya,
-            dan akan di-escape saat ditampilkan di halaman publik.
+            Branch vulnerable-login sengaja tidak membatasi panjang komentar,
+            sehingga oversized input dapat didemokan sebagai analog risiko buffer overflow.
         </p>
     </div>
 
@@ -50,11 +56,10 @@ page_header('Tulis Komentar');
         <textarea
             id="body"
             name="body"
-            maxlength="<?= MAX_COMMENT_LENGTH ?>"
             rows="7"
             required
         ><?= h($body) ?></textarea>
-        <p class="hint">Maksimal <?= MAX_COMMENT_LENGTH ?> karakter.</p>
+        <p class="hint">Branch vulnerable-login tidak membatasi panjang komentar.</p>
 
         <button class="button" type="submit">Simpan Komentar</button>
     </form>

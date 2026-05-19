@@ -41,7 +41,7 @@ page_header('Papan Komentar Publik');
                             <strong><?= h($comment['author']) ?></strong>
                             <time><?= h(date('d M Y H:i', strtotime((string) $comment['created_at']))) ?></time>
                         </div>
-                        <p><?= nl2br(h($comment['body'])) ?></p>
+                        <p><?= nl2br((string) $comment['body']) ?></p>
                     </article>
                 <?php endforeach; ?>
             </div>

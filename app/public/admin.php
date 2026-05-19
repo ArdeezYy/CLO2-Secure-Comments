@@ -22,8 +22,9 @@ page_header('Admin Panel');
     <p class="eyebrow">Database Monitoring</p>
     <h1>Admin panel database</h1>
     <p>
-        Pantau tabel user dan komentar langsung dari aplikasi. Semua output tetap
-        di-escape agar payload XSS di database tidak dieksekusi browser.
+        Pantau tabel user dan komentar langsung dari aplikasi. Pada branch
+        vulnerable-login, isi komentar sengaja ditampilkan tanpa escaping agar
+        stored XSS dapat didemokan.
         Panel ini hanya dapat diakses akun admin/root.
     </p>
 </section>
@@ -110,7 +111,7 @@ page_header('Admin Panel');
                     <tr>
                         <td><?= h((string) $commentRow['id']) ?></td>
                         <td><?= h((string) $commentRow['author']) ?></td>
-                        <td class="comment-cell"><?= h((string) $commentRow['body']) ?></td>
+                        <td class="comment-cell"><?= (string) $commentRow['body'] ?></td>
                         <td><?= h(date('d M Y H:i', strtotime((string) $commentRow['created_at']))) ?></td>
                     </tr>
                 <?php endforeach; ?>
